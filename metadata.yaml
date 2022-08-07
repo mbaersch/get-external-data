@@ -1,0 +1,6 @@
+homepage: "https://www.markus-baersch.de"
+documentation: "https://github.com/mbaersch/get-external-data#readme"
+versions:
+  # Latest version
+  - sha: 955b265ac847751b970804fb61466dfaacdf077a
+    changeNotes: Initial release.
