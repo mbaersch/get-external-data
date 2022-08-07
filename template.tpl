@@ -17,7 +17,7 @@ ___INFO___
   "categories": [
     "UTILITY"
   ],
-  "description": "read file contents / data from a github repo or any external source using a GET request.",
+  "description": "read file contents / data from a github repo or any external source using a GET request. Optional caching in templateDataStorage",
   "containerContexts": [
     "SERVER"
   ]
@@ -29,7 +29,7 @@ ___TEMPLATE_PARAMETERS___
 [
   {
     "type": "TEXT",
-    "name": "file_path",
+    "name": "filePath",
     "displayName": "Path / URL",
     "simpleValueType": true,
     "valueValidators": [
@@ -37,6 +37,19 @@ ___TEMPLATE_PARAMETERS___
         "type": "NON_EMPTY"
       }
     ]
+  },
+  {
+    "type": "TEXT",
+    "name": "cacheTime",
+    "displayName": "Cache Time (ms)",
+    "simpleValueType": true,
+    "valueHint": "0 \u003d no caching",
+    "valueValidators": [
+      {
+        "type": "NON_NEGATIVE_NUMBER"
+      }
+    ],
+    "defaultValue": 0
   }
 ]
 
@@ -44,8 +57,23 @@ ___TEMPLATE_PARAMETERS___
 ___SANDBOXED_JS_FOR_SERVER___
 
 const sendHttpGet = require("sendHttpGet");
+const JSON = require("JSON");
+const templateDataStorage = require("templateDataStorage");
+const getTimestampMillis = require("getTimestampMillis"); 
 
-var url = data.file_path;
+const url = data.filePath;
+const cacheKey = require('sha256Sync')(url, {outputEncoding: 'hex'});
+const cacheTime = data.cacheTime;
+
+if (cacheTime > 0) {
+  var cachedUrlResult = templateDataStorage.getItemCopy(cacheKey);
+  if (cachedUrlResult) {
+    var cacheJSON = JSON.parse(cachedUrlResult);
+    if (cacheJSON && (getTimestampMillis() - (cacheJSON.timestamp||0) < cacheTime)) {
+      return cacheJSON.result;
+    } 
+  }
+}
 
 return sendHttpGet(
   url, 
@@ -53,7 +81,12 @@ return sendHttpGet(
 ).then(
   function(result) {
     if (result.statusCode === 200) {
-      return require('decodeUriComponent')(result.body);
+      const res = require('decodeUriComponent')(result.body);
+      if (cacheTime > 0) { 
+        var cacheContent = JSON.stringify({timestamp: getTimestampMillis(), result: res});
+        templateDataStorage.setItemCopy(cacheKey, cacheContent);
+      }  
+      return res;
     }
   }, function() {return undefined;}
 );
@@ -80,6 +113,16 @@ ___SERVER_PERMISSIONS___
     },
     "clientAnnotations": {
       "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "access_template_storage",
+        "versionId": "1"
+      },
+      "param": []
     },
     "isRequired": true
   }
