@@ -1,5 +1,12 @@
-# Get External Data (get-external-data)
-Google Tag Manager Custom Variable Template for receiving file contents / data from external url or simple APIs using a GET request
+# Get External Data 
+
+**Custom Variable Template for Server-Side Google Tag Manager**
+
+Variable for receiving file contents / data from external url or simple APIs using a GET request
+
+![Template Status](https://img.shields.io/badge/Community%20Template%20Gallery%20Status-submitted-orange) ![Repo Size](https://img.shields.io/github/repo-size/mbaersch/get-external-data) ![License](https://img.shields.io/github/license/mbaersch/get-external-data)
+
+---
 
 
 ## Usage
